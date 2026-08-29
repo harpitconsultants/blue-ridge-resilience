@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Building a Cybersecurity Research Lab with Proxmox</title><link rel="stylesheet" href="/styles.css"></head><body><header class="site-header"><div class="wrap nav"><a class="brand" href="/">BLUE RIDGE RESILIENCE<span>CYBERSECURITY RESEARCH & DEFENSE</span></a><nav class="nav-links"><a href="/blog/">Research</a><a href="/projects/">Projects</a></nav></div></header><article class="article"><div class="kicker">Labs & Projects</div><h1>Building a Cybersecurity Research Lab with Proxmox</h1><p class="lead">A starter article template showing how Blue Ridge Resilience technical posts can look. Replace this content with your actual architecture, screenshots, lessons learned, and defensive takeaways.</p><h2>Goals</h2><p>The lab should create safe separation between normal household systems and research workloads while still making it easy to collect telemetry and reproduce experiments.</p><h2>Architecture</h2><pre><code>Internet
+  |
+Firewall / Router
+  |
+Research VLAN
+  |
+Proxmox
+  |-- Windows endpoints
+  |-- Linux systems
+  |-- SIEM / log collection
+  `-- Analysis tooling</code></pre><h2>Design principles</h2><p>Keep research workloads segmented, minimize unnecessary inbound exposure, snapshot aggressively, document changes, and treat telemetry as a first-class requirement.</p><h2>What comes next</h2><p>Add your diagrams, screenshots, configuration notes, GitHub links, detections, and lessons learned. This can become one of the anchor projects for the site.</p></article><footer class="footer"><div class="wrap">© 2026 Blue Ridge Resilience</div></footer></body></html>
