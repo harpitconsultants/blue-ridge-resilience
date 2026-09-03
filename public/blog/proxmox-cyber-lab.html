@@ -1,16 +1,438 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="A practical blueprint for building an isolated Proxmox cybersecurity research lab."><title>Building a Cybersecurity Research Lab with Proxmox | Blue Ridge Resilience</title><link rel="stylesheet" href="/styles.css"></head><body>
-<header class="site-header"><div class="wrap nav"><a class="brand" href="/">BLUE RIDGE RESILIENCE<span>CYBERSECURITY RESEARCH & DEFENSE</span></a><button class="menu-btn" aria-label="Toggle navigation">Menu</button><nav class="nav-links"><a href="/">Home</a><a href="/news/">Cyber News</a><a class="active" href="/blog/">Research</a><a href="/projects/">Projects</a><a href="/about/">About</a></nav></div></header>
-<main><article class="article-shell"><a class="back-link" href="/blog/">← Back to Research</a><header class="article-header"><div class="post-category">Labs & Projects</div><h1>Building a Cybersecurity Research Lab with Proxmox</h1><p class="article-description">A practical blueprint for isolating security research, collecting telemetry, and creating a repeatable environment for defensive testing.</p><div class="article-meta"><span>Blue Ridge Research</span><span>•</span><span>8 min read</span></div></header>
-<section class="article-section"><h2>Goals</h2><p>The lab should create safe separation between normal household systems and research workloads while still making it easy to collect telemetry and reproduce experiments.</p></section><section class="article-section"><h2>Architecture</h2><pre><code>Internet
-  |
-Firewall / Router
-  |
-Research VLAN
-  |
-Proxmox
-  |-- Windows endpoints
-  |-- Linux systems
-  |-- SIEM / log collection
-  `-- Analysis tooling</code></pre></section><section class="article-section"><h2>Design principles</h2><p>Keep research workloads segmented, minimize unnecessary inbound exposure, snapshot aggressively, document changes, and treat telemetry as a first-class requirement.</p></section><section class="article-section defender-section"><div class="section-label">Blue Ridge Defender Takeaways</div><h2>Make the lab repeatable and observable.</h2><ul><li>Separate research workloads from normal household and business systems.</li><li>Design telemetry collection before beginning attack simulation.</li><li>Use snapshots to return systems to known states.</li><li>Document network changes, test cases, and findings.</li></ul></section><section class="article-section"><h2>What comes next</h2><p>Add diagrams, screenshots, configuration notes, GitHub links, detections, and lessons learned as the lab matures.</p></section>
-<footer class="article-author"><span class="author-label">BLUE RIDGE RESILIENCE</span><h3>Defensive security research</h3><p>Practical research across detection engineering, threat hunting, threat intelligence, incident response, and security architecture.</p></footer></article></main>
-<footer class="footer"><div class="wrap footer-grid"><div>© 2026 Blue Ridge Resilience • A HARP IT Consultants, LLC initiative.</div><div class="footer-links"><a href="/news/">Cyber News</a><a href="/blog/">Research</a><a href="/projects/">Projects</a><a href="/about/">About</a></div></div></footer><script src="/script.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <meta name="description"
+        content="Building an isolated cybersecurity research lab with Proxmox, a GL.iNet travel router, WireGuard, and hardware I already had lying around.">
+
+    <title>Building My Cybersecurity Research Lab with Proxmox | Blue Ridge Resilience</title>
+
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+
+<header class="site-header">
+    <div class="wrap nav">
+
+        <a class="brand" href="/">
+            BLUE RIDGE RESILIENCE
+            <span>CYBERSECURITY RESEARCH & DEFENSE</span>
+        </a>
+
+        <button class="menu-btn" aria-label="Toggle navigation">
+            Menu
+        </button>
+
+        <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="/news/">Defender Briefs</a>
+            <a class="active" href="/blog/">Blog</a>
+            <a href="/projects/">Projects</a>
+            <a href="/about/">About</a>
+        </nav>
+
+    </div>
+</header>
+
+
+<main>
+
+<article class="article-shell">
+
+    <a class="back-link" href="/blog/">← Back to Blog</a>
+
+
+    <header class="article-header">
+
+        <div class="post-category">Labs & Projects</div>
+
+        <h1>Building My Cybersecurity Research Lab with Proxmox</h1>
+
+        <p class="article-description">
+            Building an isolated cybersecurity research lab with Proxmox,
+            a GL.iNet travel router, WireGuard, and hardware I already had
+            lying around.
+        </p>
+
+        <div class="article-meta">
+            <span>Crystal Litaker</span>
+            <span>•</span>
+            <span>8 min read</span>
+        </div>
+
+    </header>
+
+
+    <section class="article-section">
+
+        <h2>Purpose of the Lab</h2>
+
+        <p>
+            The purpose of this lab is pretty simple. I want somewhere that
+            I can research, test, break things, and learn without putting my
+            home network at risk.
+        </p>
+
+        <p>
+            The lab will not only be used for capturing and analyzing cyber
+            events. I plan to use it for reverse engineering, threat hunting,
+            use case development, SIEM engineering, detection engineering,
+            testing tools, and pretty much everything in between.
+        </p>
+
+        <p>
+            This is also not meant to be some huge enterprise lab. It is
+            something I built with hardware I already had lying around and
+            decided to make useful.
+        </p>
+
+    </section>
+
+
+    <section class="article-section">
+
+        <h2>The Setup</h2>
+
+        <p>
+            The first thing I wanted was to separate the lab from the rest
+            of my home network.
+        </p>
+
+        <p>
+            For that I am using a <strong>GL.iNet travel router</strong>.
+            The travel router sits between my home network and the lab and
+            gives me a separate network for all of my research.
+        </p>
+
+        <p>
+            From there, the main system in the lab is an
+            <strong>HP ProBook G2 running Proxmox VE</strong> as the
+            hypervisor.
+        </p>
+
+        <p>The ProBook has been upgraded to:</p>
+
+        <ul>
+            <li>1TB SSD</li>
+            <li>16GB RAM</li>
+            <li>Proxmox VE</li>
+        </ul>
+
+        <p>
+            It is definitely not the most powerful lab server in the world,
+            but that is also kind of the point. You do not need a rack full
+            of enterprise hardware to start building a cybersecurity lab.
+        </p>
+
+        <p>
+            I had the laptop available, so I decided to see what I could do
+            with it.
+        </p>
+
+    </section>
+
+
+    <section class="article-section">
+
+        <h2>Network Diagram</h2>
+
+        <figure class="article-figure">
+
+            <img
+                src="/images/blog/proxmox-lab/proxmox_lab_diagram_v1.png"
+                alt="Blue Ridge Research Lab network diagram">
+
+            <figcaption>
+                Current Blue Ridge Research Lab architecture. This will
+                continue to change as the lab grows.
+            </figcaption>
+
+        </figure>
+
+        <p>The basic layout is:</p>
+
+        <pre><code>Home Network
+    |
+GL.iNet Travel Router
+    |
+Isolated Lab Network
+    |
+HP ProBook G2
+    |
+Proxmox VE
+    |
+Virtual Machines</code></pre>
+
+        <p>
+            One of the main reasons I set it up this way is so I can
+            experiment without having everything sitting directly on my
+            normal home network.
+        </p>
+
+    </section>
+
+
+    <section class="article-section">
+
+        <h2>Remote Access</h2>
+
+        <p>
+            I also wanted to be able to work on the lab when I am not
+            sitting at home.
+        </p>
+
+        <p>
+            For remote access I am using <strong>WireGuard VPN</strong>.
+            This allows me to connect back into the lab when I am away
+            without exposing the Proxmox management interface directly
+            to the Internet.
+        </p>
+
+        <p>
+            This is especially useful because I can work on something,
+            leave the house, and still get back into the environment
+            if I need it.
+        </p>
+
+    </section>
+
+
+    <section class="article-section">
+
+        <h2>What Is Running in the Lab?</h2>
+
+        <p>
+            Right now I have several different systems planned or running
+            in Proxmox. This is not a complete list and will probably
+            continue changing as the lab grows.
+        </p>
+
+
+        <h3>Splunk and Elastic</h3>
+
+        <p>
+            Both <strong>Splunk</strong> and <strong>Elastic</strong> will
+            be used for collecting and analyzing data.
+        </p>
+
+        <p>
+            A big part of this lab is going to be SIEM engineering and
+            detection development. I want to be able to generate activity
+            in one part of the lab, collect the telemetry, and then actually
+            see what that activity looks like from the defender side.
+        </p>
+
+        <p>
+            This also gives me somewhere to build and test searches,
+            detections, dashboards, and use cases without worrying about
+            breaking anything important.
+        </p>
+
+
+        <h3>Kali Linux and ParrotOS</h3>
+
+        <p>
+            I am using <strong>Kali Linux</strong> and
+            <strong>ParrotOS</strong> for offensive security testing and
+            generating activity inside the lab.
+        </p>
+
+        <p>
+            Having both the offensive and defensive side in the same
+            environment gives me the ability to perform an action and
+            then turn around and see what evidence that action created.
+        </p>
+
+        <p>
+            That is one of the things I really want to explore more with
+            this lab.
+        </p>
+
+
+        <h3>REMnux and FlareVM</h3>
+
+        <p>
+            For malware analysis and reverse engineering, I am using
+            <strong>REMnux</strong> and <strong>FlareVM</strong>.
+        </p>
+
+        <p>
+            REMnux gives me a Linux based environment for malware analysis
+            while FlareVM gives me a Windows based reverse engineering
+            environment.
+        </p>
+
+        <p>
+            These will eventually be used for analyzing suspicious files,
+            looking at malware behavior, and learning more about the
+            artifacts that malware leaves behind.
+        </p>
+
+
+        <h3>Honeypots and Internet Monitoring</h3>
+
+        <p>
+            I also plan on experimenting with honeypots and other systems
+            that allow me to capture and study activity coming from the
+            Internet.
+        </p>
+
+        <p>
+            One of the resources I will be using for this is the
+            <strong>SANS Internet Storm Center</strong>.
+        </p>
+
+        <p>
+            I have followed the Storm Center for years and I want to
+            incorporate some of those ideas into the lab so I can collect
+            activity myself and compare what I am seeing with what others
+            are seeing across the Internet.
+        </p>
+
+        <p>
+            You can find the SANS Internet Storm Center at
+            <a href="https://isc.sans.edu/" target="_blank" rel="noopener">
+                isc.sans.edu
+            </a>.
+        </p>
+
+    </section>
+
+
+    <section class="article-section">
+
+        <h2>Resource Limitations</h2>
+
+        <p>
+            One important thing to note is that
+            <strong>all of these systems are not running at the same time</strong>.
+        </p>
+
+        <p>
+            The ProBook only has 16GB of RAM, so there is obviously a limit
+            to how much I can run at once.
+        </p>
+
+        <p>
+            If I am working with Splunk, I may not need FlareVM running.
+            If I am doing malware analysis, I may shut down some of the
+            other systems. It really just depends on what I am working on
+            at the time.
+        </p>
+
+        <p>
+            There are plans to eventually upgrade the lab to something
+            more robust. For now, though, this is what I had lying around
+            and I wanted to make it useful.
+        </p>
+
+        <p>
+            I also think there is something fun about seeing how much you
+            can actually do without buying a bunch of new hardware.
+        </p>
+
+    </section>
+
+
+    <section class="article-section defender-section">
+
+        <div class="section-label">
+            Blue Ridge Lab Notes
+        </div>
+
+        <h2>You do not need enterprise hardware to start learning.</h2>
+
+        <ul>
+            <li>Keep research systems separated from your normal network.</li>
+            <li>Use what you already have before spending money on new hardware.</li>
+            <li>Build both the offensive and defensive sides of the lab.</li>
+            <li>Collect telemetry so you can see what your activity actually looks like.</li>
+            <li>Do not expect to run every VM at the same time on limited hardware.</li>
+            <li>Let the lab grow as you find new things you want to learn.</li>
+        </ul>
+
+    </section>
+
+
+    <section class="article-section">
+
+        <h2>What's Next?</h2>
+
+        <p>
+            This is a limited list of what will be in the lab because it is
+            going to continue growing and changing.
+        </p>
+
+        <p>
+            There are a lot of things I want to experiment with, and I am
+            sure that list will change as I find new tools, new projects,
+            and probably new rabbit holes to go down.
+        </p>
+
+        <p>
+            As I build things out, I plan on documenting them here.
+        </p>
+
+        <p>
+            That includes what worked, what did not work, how I configured
+            things, detections I build, interesting activity I find, and
+            anything else that might be useful to someone building their
+            own lab.
+        </p>
+
+        <p>
+            The goal isn't to build the perfect cyber lab.
+        </p>
+
+        <p>
+            <strong>The goal is to have somewhere to keep learning.</strong>
+        </p>
+
+    </section>
+
+
+    <footer class="article-author">
+
+        <span class="author-label">ABOUT THE AUTHOR</span>
+
+        <h3>Crystal Litaker</h3>
+
+        <p>
+            Cybersecurity practitioner sharing projects, research, lessons
+            learned, and things I find interesting along the way.
+        </p>
+
+    </footer>
+
+</article>
+
+</main>
+
+
+<footer class="footer">
+
+    <div class="wrap footer-grid">
+
+        <div>
+            © 2026 Blue Ridge Resilience • A HARP IT Consultants, LLC initiative.
+        </div>
+
+        <div class="footer-links">
+            <a href="/news/">Defender Briefs</a>
+            <a href="/blog/">Blog</a>
+            <a href="/projects/">Projects</a>
+            <a href="/about/">About</a>
+        </div>
+
+    </div>
+
+</footer>
+
+<script src="/script.js"></script>
+
+</body>
+</html>
